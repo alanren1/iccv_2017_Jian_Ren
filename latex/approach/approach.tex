@@ -1,0 +1,107 @@
+\section{Approach}
+In this section, we first introduce our proposed approach to learn personalized aesthetics models by adapting a generic aesthetics model to individual users and then continue to derive an active learning algorithm for real-world photo curation applications. 
+\subsection{Personalized aesthetics model (PAM)}\label{PAM}
+
+In real-world photo ranking and curation applications, users often provide a very limited number of aesthetic ratings or feedbacks to their own photos. The lack of labeled exampled makes it difficult to train a meaningful personalized aesthetics model from scratch. Traditional recommendation-based approaches such as collaborate filtering may not be very effective as they require significant overlapping of items rated by different users. In photo curation applications, the user-item matrix could be too sparse to learn effective latent vectors\cite{o2014collaborative}. 
+
+In order to learn an effective personalized model with good generalization, we aim to capture not only the common aesthetic preference shared across individuals\cite{bronstad2007beauty} but also the unique aesthetic preference by each individual \cite{yeh2014personalized, vessel2014personalized} .
+%, which are two vital importance components to understand personalized image aesthetics. 
+Following this idea, we propose to leverage the generic aesthetics model trained to predict the average user's ratings, and focus personalized aesthetics learning on modeling the deviation (residual) of individual aesthetics scores from the generic aesthetics scores. We first train a generic aesthetics model using the FLICKR-AES training set by treating the average rating as the ground truth aesthetic score. Then, given an example set rated by each user, we apply the generic model to each image in the set to compute the residual scores between the user's ratings and the generic scores. Finally, we train a regression model\cite{chang2002training} to predict the residual scores. The overview of the approach is illustrated in Figure~\ref{offset_a}.
+
+%The overview of the approach is illustrated in Figure~\ref{offset_a}. The details of the generic aesthetics model as well as the SVR personalization model will be described in details respectively.
+
+\paragraph{Generic aesthetics prediction}
+Recent studies\cite{kong2016photo, lu2014rapid, lu2015deep} have achieved promising results on generic image aesthetics prediction using deep learning. Inspired by these works, we train a deep neural network to predict genetic aesthetic scores. It has the same architecture as in~\cite{ioffe2015batch} except that we trimmed the number of neurons in the second-to-the-last layer, which we found makes the training more efficient and yields better accuracies. We tested different combinations of loss functions as in~\cite{kong2016photo}, but experimentally found that the Euclidean loss function alone works the best on our dataset. We also verified that our generic model achieves results comparable to the recent state of the art by Kong et al.~\cite{kong2016photo} on their AADB dataset~\cite{kong2016photo}.
+%The details of the last inception are illustrated in Table~\ref{inception}.  Besides the trimmed inception, a dropout layer with 50\% ratio is added after the last pooling layer. 
+%In order to predict continuous aesthetics values, we use Euclidean loss to train the network. 
+%\vspace{-0.1in}
+%\begin{equation}
+%\small
+%loss_{aes} = \frac{1}{2N} \sum_{i=1}^{N} {\left \| y_{i}^{'} - y_i \right %\|_{2}^{2}}
+%\vspace{-0.1in}
+%\end{equation}
+%where $y_i$ is the ground truth rating from AMT for the $i-th$ image, and %$y_{i}^{'}$ is the corresponding predicted aesthetics score. 
+%Only one loss function is used at the end because we tried the multiple loss functions as in \cite{ioffe2015batch} but found the L2 loss-alone works the best for the FLICKR-AES dataset.
+
+\paragraph{Residual learning for personalized aesthetics}
+With the generic aesthetic scores, we can compute residual scores (offsets) for the example images by subtracting them from ratings by each user. Our goal is then reduced to learn a regressor to predict the residual score given any new image.
+
+Due to the lack of annotated examples from each user, training such regressor directly from an image is not practical. Therefore, we propose to use high-level image attributes related to image aesthetics to form a compact feature representation for residual learning.
+We consider both aesthetic and content attributes inspired by previous studies\cite{kong2016photo, dhar2011high, lu2014rapid, marchesotti2015discovering, luo2011content, murray2012ava} for automatic assessment of generic aesthetics.   
+%For example, some user may prefer portrait photos over landscape photos, and different users may have different tastes on colorful images. 
+
+Given the features, we simply use the support vector regressor with a radial basis function kernel to predict the residual score as shown in Equation~\ref{svr},
+%**************************SVRegression************************
+\begin{equation}
+\begin{split}
+& {min} \hspace{0.3cm}\frac{1}{2} \textbf{w}^T \textbf{w}+C(\nu\epsilon  + \frac{1}{l}\sum_{i=1}^{l}(\xi_{i}+\xi_{i}^{*} ) )\\
+& s.t. \hspace{0.4cm}  (\textbf{w}^T\phi(\textbf{x}_i) + b) - y_i\leq \epsilon  + \xi _{i},\\
+& \hspace{0.9cm}   y_i - (\textbf{w}^T\phi(\textbf{x}_i) + b) \leq \epsilon  + \xi _{i}^{*},\\
+&\hspace{0.9cm}   \xi_{i},\xi _{i}^{*}\geq 0, i=1,...l,  \epsilon \geq 0.
+\end{split}
+\label{svr}
+\end{equation}
+\vspace{-0.1in}
+
+%****************************************************************
+where $\textbf{x}_i$ is the concatenation of aesthetic attribute features and content features, $y_i$ is the target offset value, $C$ is the regularization parameter, and $\nu$ ($0 < \nu \leq 1$) controls the proportion of the number of support vectors with respect to the number of total training images. We discuss the details of the feature vector $\textbf{x}_i$ in the following.
+
+%The preferences of users usually lie on certain image content or image style.
+
+\paragraph{Feature representation for personalized aesthetics}
+We first leverage the existing AADB\cite{kong2016photo} dataset which contains around 10,000 images labeled with ten aesthetic attributes\footnote{The aesthetics attributes include \textsl{interesting content (IC)}, \textsl{object emphasis (OE)}, \textsl{good lighting (GL)}, \textsl{color harmony (CH)}, \textsl{vivid color (VC)}, \textsl{shallow depth of field (DoF)}, \textsl{rule of thirds (RoT)}, \textsl{balancing element (BE)}, \textsl{repetition (RE)} and \textsl{symmetry (SY)} } to train our aesthetic attribute features. Due to the limited number of training images provided by AADB, we use our trained generic aesthetics network as a pre-trained model, and fine-tune it by multi-task training, i.e. attribute prediction using AADB and aesthetics prediction uisng Flickr-AES. We use the Euclidean loss for both attribute prediction and aesthetics prediction, and fix all the earlier layers of the generic model and only fine-tune its last shared inception layer and the prediction layers. Given the fine-tuned network, we use the $10$-dimensional responses as the aesthetic attributes feature vector $f_{attr}$. Experiments show that the attributes prediction performance of our jointly trained network is significantly better than the one from\cite{kong2016photo}, as shown in Table~\ref{attributes}. It demonstrates that features learned from larger-scale aesthetics dataset could also benefit attributes prediction attribute annotations.
+
+As for the content features, we use the off-the-shelf image classification network\cite{ioffe2015batch} to extract semantic features (avg pool) from each image. In order to generate compact content attribute features, we first use $k$-means to cluster the images from the FLICKR-AES training set into $k=10$ semantic categories using the second-to-the-last inception layer output as the feature. We then add a $k$-way soft-max layer on top of the network and fine-tune the layer with the cross-entropy loss. The $10$-dimensional outputs of the network are defined as the content attributes feature vector $f_{cont}$. We concatenate the two feature vectors $\textbf{x} = [f_{attr}, f_{cont}]^T$, to form our final feature representation to personalized aesthetics learning. Experiments show the concatenation of attributes and content features achieve better results than using each of them alone.
+%***********************greedy algorithm******************************************
+\begin{algorithm}
+\small
+    \SetKwInOut{Input}{Input}
+   \Input{Unrated photo set  $\mathcal{N}=\{{p_i }\}_{i=1,K}$, the aesthetic feature vectors $v_i$, the maximum number of example ratings $m$;}
+    Initialize the set of rated examples as: $\mathcal{R} = \emptyset $ \;
+    Randomly select a subset $\mathcal{S}$ of $\floor{K/10}$ images from $\mathcal{N}$ and move them to $\mathcal{R}$: $\mathcal{N} = \mathcal{N} \setminus \mathcal{S}$, $\mathcal{R} = \mathcal{R} \cup  S$ \;
+
+    \While{$|\mathcal{R}|< m$}{
+   Train a regressor to predict the residual score $ \{r_i \} $\;
+   Calculate the weight for each annotated image   
+   \begin{equation}
+   %\begin{split}
+   %&
+    w_i =(1 - \frac{\left | r_i \right |}{\sum_{i=1}^{|\mathcal{R}|}(\left | r_i \right |)}) , p_i \in \mathcal{R}
+   %\end{split}
+   \label{weight}
+    \vspace{-0.2in}
+   \end{equation}  \
+   
+    Find $p_q$  that
+    \begin{equation}
+    %\centering
+    %\begin{split}
+ \underset{q}{max} \hspace{0.1cm} \sum_{j=1}^{|\mathcal{R}|}w_j dist(v_q, v_j),    p_q \in \mathcal{N},  p_j \in \mathcal{R}\;
+    %\end{split}
+    \label{objective}
+     \vspace{-0.15in}
+    \end{equation}
+    \noindent
+
+    Add the selected image to $R$ and update $N$:
+    $\mathcal{R} = \mathcal{R} \cup  \{p_q \} $ and $\mathcal{N}\setminus p_q$ \;
+    %Remove $p_q$ from $N  $\;
+    }
+    \caption{Active-PAM}
+\label{alg}
+\end{algorithm}
+\vspace{-0.05in}
+
+%***************************************************************
+
+%\subsection{personalize aesthetics model}
+\subsection{Active personalized image aesthetics learning (Active-PAM)}\label{Active}
+%why we need select training images then how to do this 
+%active learning for personalize aesthetics
+In real-world applications such as interactive photo curation, users can continuously provide ratings regarding their aesthetics preference during the photo selection and ranking process\cite{yeh2010personalized, yeh2014personalized}. Instead of waiting for users to provide ratings on arbitrary images, we can use active learning to automatically select the most representative images for users to rate, and learn from their feedback online. To minimize the user effort, we propose a new active learning algorithm to optimize sequential selection of training images for personalized aesthetics learning. Specifically, we consider the following two criteria: 1) the selected images should cover diverse aesthetic styles as quickly as possible with minimum redundancy; 2) the images with large residual scores between user's ratings and the generic aesthetics scores are more informative. 
+
+Based on these criteria, we design our active selection algorithm as follows. For each image $p_i$ in the collection $\mathcal{N}$, we denote its aesthetics score predicted by the generic aesthetics network as $s_i$, features extracted at the second-to-the-last layer output as $f_i$. The aesthetic feature capturing the aesthetic styles of the image can then be represented as $v_i = [w_{a}f_i, s_i]$, where $w_a$ is a constant balancing the two terms. We can then measure the distance between any two images $p_i$ and $p_j$ using the Euclidean distance $dist(v_i, v_j)$.
+
+Given a set of images $\mathcal{R}$ already annotated by the user, for each remaining image $p_i$ in the album, we can calculate the sum of distances between $p_i$ and any image $p_j$ in $\mathcal{R}$, $ d_i = \sum_{j=1}^{|\mathcal{R}|} dist(v_i, v_j)$, $p_j\in \mathcal{R}$. At each step, we can choose the image with the largest $d_i$ according to the first criterion. In order to incorporate the second criterion at the same time, we can encourage selecting the image producing large residuals in $\mathcal{R}$. We denote the residual score as $r_j$ and assign weight $w_j$ to each image using Equation~\ref{weight}. We apply the weights to the overall distance, resulting in Equation~\ref{objective}. The details of the active learning algorithm are described in Algorithm~\ref{alg}.
+
+

@@ -1,0 +1,221 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{iccv}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{makecell}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+%\usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+%usepackage{pbox}
+%\usepackage[export]{adjustbox}
+\newcommand\floor[1]{\lfloor#1\rfloor}
+\newcommand\ceil[1]{\lceil#1\rceil}
+\usepackage{subfig}
+\usepackage[utf8]{inputenc}
+\usepackage{array}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+% I
+% Include other packages here, before hyperref.
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+\usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
+
+% \iccvfinalcopy % *** Uncomment this line for the final submission
+
+\def\iccvPaperID{244} % *** Enter the ICCV Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+% Pages are numbered in submission mode, and unnumbered in camera-ready
+\ificcvfinal\pagestyle{empty}\fi
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{Personalized Image Aesthetics}
+
+\author{First Author\\
+Institution1\\
+Institution1 address\\
+{\tt\small firstauthor@i1.org}
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+\and
+Second Author\\
+Institution2\\
+First line of institution2 address\\
+{\tt\small secondauthor@i2.org}
+}
+
+\maketitle
+%\thispagestyle{empty}
+
+\begingroup
+\let\clearpage\relax
+%****************************************************************
+%*************abstract*******************************************
+\include{abstract/abstract}
+%****************************************************************
+%***************introduction****************************************
+\include{introduction/introduction}
+%****************************************************************
+%****************related_work***********************************
+\include{related_work/related_work}
+%****************************************************************
+%***************datasets*****************************************
+%**************figure: two examples*********************************
+\begin{figure*}
+\centering
+\subfloat[]{
+  \includegraphics[width=1.7\columnwidth]{figures/amtRandomNew}\label{corrEx}
+}\\
+\vspace{-0.1in}
+\subfloat[]{
+  \includegraphics[width=1.8\columnwidth]{figures/turk1_4}\label{turker1_4}
+}
+\vspace{-0.15in}
+
+\caption{(a) Ranking correlation between offsets and image attributes for randomly selected 8 AMT workers and 2 random users. (b) First row: Example images rated by Worker1. The user tends to assign higher scores to landscapes and lower scores to crowd scenes than the average ratings; Second row: Example images rated by Worker4. The user tends to assign lower scores to images containing symmetry attributes but higher scores to people scenes than the average ratings.}\label{corrTurker}
+\vspace{-0.1in}
+\end{figure*}
+%****************************************************************
+\include{datasets/datasets}
+%****************************************************************
+%*************************************approach****************************************
+%*************figure: offset pipeline and attributes network*************
+\begin{figure}
+\centering
+\includegraphics[width=1.0\columnwidth]{figures/offset} 
+\caption{An overview of the proposed residual-based personalized aesthetics model.}
+\label{offset_a}
+\end{figure}
+%****************************************************************
+
+
+%*****************approach****************************************
+\include{approach/approach}
+
+%*******************************attributes table********************
+\begin{table}
+\begin{center}
+\small
+\centerline{
+\begin{tabular}{C{1.7cm} C{0.9cm} C{0.9cm} C{0.9cm} C{0.9cm} C{0.9cm}} 
+\Xhline{2.5\arrayrulewidth}
+ &VC&GL&IC&SY&DoF \\% [0.5ex] % inserts table
+\hline % inserts single horizontal line
+Baseline & 0.5759 & 0.3770 & 0.4854 & 0.2283 & 0.5071 \\ %[1ex] 
+Our Results & \textbf{0.6938} & \textbf{0.4963} & \textbf{0.5641} & \textbf{0.2558} & \textbf{0.5476} \\% [1ex] adds vertical space
+%hline %inserts single line
+\Xhline{1.5\arrayrulewidth}
+& OE&BE&CH&RE&RoT\\ %[0.5ex] % inserts table
+\hline
+Baseline & 0.5728 & 0.2035 & 0.4808 & 0.3150 & 0.2174\\%[1ex]
+Our Results & \textbf{0.6718} & \textbf{0.3104} & \textbf{0.5176} & \textbf{0.3749} & \textbf{0.2737} \\% [1ex] adds vertical space
+\Xhline{2.5\arrayrulewidth}
+\end{tabular}
+}
+\end{center}
+\vspace{-0.1in}
+\caption{Attributes comparison of the baseline\cite{kong2016photo} and our results. Both calculated by correlation $\rho$.  Jointly training attributes and aesthetics improves the attributes prediction.} % title of Table
+\label{attributes} % is used to refer this table in the text
+\end{table}
+%******************************************************************************
+
+%******************************************************************************
+%******************experiments*************************************************
+%*************show 2 examples*********************************
+\begin{figure}
+\centering
+\subfloat[One example user from FLICKR-AES]{\includegraphics[width=1\columnwidth]{figures/user1_new}}%3.5in
+\\
+\subfloat[One example user from REAL-CUR]{\includegraphics[width=1\columnwidth]{figures/user2_new}}
+\caption{Example results of personalized aesthetics prediction from two users. The examples in (a) comes from FLICKR-AES and the examples in (b) comes from REAL-CUR. The blue bar is the user rating, the yellow bar is the generic aesthetics prediction and the green bar is the personalized aesthetics prediction for this user. As can be seen, our personalized model more accurately predicts user ratings than the generic model.
+}
+\vspace{-0.2in}
+\label{examples}
+\end{figure}
+
+%******************************************************************************
+\include{experiments/experiments}
+
+
+%******************************************************************************
+
+%**********************Table: Feature & MF********************
+\begin{table}
+\begin{center}
+\small
+\centerline{
+\begin{tabular}{|C{3.55cm}| C{1.93cm}| C{1.93cm} |} 
+\hline
+ &  10 images &  100 images\\ \hline
+Direct score prediction  &-0.352 $\pm$ 0.050  & -0.176 $\pm$ 0.064 \\
+non-linear FPMF\cite{o2014collaborative} & -0.001 $\pm$ 0.003 & 0.010 $\pm$ 0.007\\ \hline
+PAM (only attribute) & 0.004 $\pm$ 0.003& 0.025 $\pm$ 0.013\\
+PAM (only content)& 0.001 $\pm$ 0.004  &0.021 $\pm$ 0.017\\
+PAM (content and attribute) &\textbf{0.006 $\pm$ 0.003} &\textbf{0.039 $\pm$ 0.012} \\
+\hline
+\end{tabular}
+}
+\end{center}
+\vspace{-0.1in}
+\caption{Comparison with direct score prediction (using SVM), non-linear FPMF\cite{o2014collaborative}, PAM with only content feature, PAM with only attribute feature and PAM with both features using different number of training images from each worker. The results are average correlation improvement.} % title of Table
+%\vspace{-0.15in}
+\label{mfNfeature} % is used to refer this table in the text
+\end{table}
+%*****************************************************************************
+
+
+%**************Different Dataset2*********************************
+\begin{figure}
+\begin{center}
+\subfloat[Results on FLICKR-AES]{
+  \includegraphics[width=0.5\columnwidth]{figures/UADallTest}\label{6c}
+}
+\subfloat[Results on REAL-CUR.]{
+  \includegraphics[width=0.5\columnwidth]{figures/RealallTest}\label{6d}
+}
+\end{center}
+\vspace{-0.1in}
+\caption{Evaluation of active learning approaches on (a) FLICKR-AES and (b) REAL-CUR on all the images in the photo album.
+\vspace{-0.1in}
+\label{fig:testresults}}
+\end{figure}
+%****************************************************************
+%**************Different Dataset*********************************
+\begin{figure}
+\begin{center}
+\subfloat[Results on FLICKR-AES]{
+  \includegraphics[width=0.5\columnwidth]{figures/methodCompare}\label{6a}
+}%\\
+\subfloat[Results on REAL-CUR]{
+  \includegraphics[width=0.5\columnwidth]{figures/realuser}\label{6b}
+}
+\end{center}
+\vspace{-0.1in}
+\caption{Evaluation of active learning approaches on (a) FLICKR-AES and (b) REAL-CUR on unseen images in the photo album. 
+\vspace{-0.15in}
+\label{fig:testresults2}}
+\end{figure}
+%****************************************************************
+
+
+\include{conclusion/conclusion}
+\endgroup
+%******************************************************************************
+%******************************************************************************
+
+
+{\small
+\bibliographystyle{ieee}
+\bibliography{egbib}
+}
+
+\end{document}
